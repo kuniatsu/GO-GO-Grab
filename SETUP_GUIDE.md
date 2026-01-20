@@ -226,16 +226,84 @@ Unity Editor で以下の手順を実行：
 
 ---
 
-## 次のステップ
+## Phase 3: 物理道路（透明床）の敷設
 
-**Phase 2** 完了後、以下に進みます：
+### Step 13: 道路メッシュ（Invisible Road Plane）の配置確認
 
-- [ ] 仮のバイク（Cube）の配置 ✅ 完了
-- [ ] `BikeController.cs` の実装 ✅ 完了
-- [ ] Raycast Suspension の実装 ✅ 完了
-- [ ] カメラ追従スクリプト ✅ 完了
+Phase 2 の Step 9 で作成した **InvisibleRoad** Plane が正しく配置されているか確認：
 
-**Phase 3:** 物理道路（透明床）の敷設
+1. **Hierarchy** で `InvisibleRoad` を選択
+2. 以下を確認：
+   - **Position:** (0, 0, 0) - ベンタイン市場中心
+   - **Scale:** (100, 1, 100) - 十分な広さ
+   - **Layer:** `Road` に設定済みか確認
+3. **Gizmos** で可視化（Scene ビュー上部）：
+   - Gizmos ボタンをクリック → Colliders にチェック
+   - Plane の Collider が緑色で表示されることを確認
+
+### Step 14: Raycast Suspension デバッグ
+
+**RaycastSuspension** が Road Plane を正しく検知しているか確認：
+
+1. **Play** ボタンを押してゲーム実行
+2. **Scene ビュー** に切り替え（Game ビューの隣）
+3. 以下を観察：
+   - **黄色のドット（4個）:** Raycast 発射地点（バイク下部）
+   - **緑色の線:** Road に正常にヒット
+   - **赤色の線:** Road に当たらない（エラー）
+4. **Spacebar** を長押し → Console でデバッグ情報表示：
+   ```
+   [Suspension] Distance: 0.50m, Error: 0.00m, Force: 0.0N
+   ```
+
+**問題が発生した場合:**
+- Red Ray が多い → `raycastDistance` を増加（2 → 3-4m）
+- Ray が Road Plane 外 → `raycastRadius` を調整（0.5 → バイク幅に合わせる）
+
+### Step 15: Cesium との整合性テスト
+
+Cesium 3D Tiles（Visual Layer）とバイク走行（Physics Layer）の整合性を確認：
+
+1. **Play** で実行中にバイクを移動（WASD キー）
+2. **以下を確認:**
+   - ✅ バイクが Cesium の建物を通り抜ける（衝突しない）
+   - ✅ バイクが InvisibleRoad 上で安定して走行
+   - ✅ カメラがスムーズに追従
+   - ✅ 斜面・曲線でのサスペンション応答が滑らか
+3. **Cesium Geometry とのズレ確認:**
+   - Visual（見た目） と Physics（走行面） が大きくズレていないか
+   - ズレが大きい場合 → InvisibleRoad の Position/Scale を調整
+
+### Step 16: 曲線道路への対応（オプション）
+
+ホーチミン市の実際の道路に合わせて曲線道路を敷設：
+
+1. 複数の小さな **Plane** を曲線状に配置
+   - 各 Plane を 45-90 度ずつ回転
+   - Y 軸方向（上下）も調整して高さの変化に対応
+
+2. コリジョン設定を確認：
+   - すべての Plane が **Road レイヤー** に属しているか
+   - 隙間がないか確認（バイクが落ちる可能性）
+
+3. テスト実行：
+   - WASD でバイクを曲線道路に沿って移動
+   - Gizmos で Ray がすべての Plane にヒットしているか確認
+
+---
+
+## Phase 3 完了チェックリスト
+
+- [ ] InvisibleRoad Plane が Road レイヤーに設定済み
+- [ ] Gizmos で Plane Collider が緑色で表示される
+- [ ] Scene ビューで Raycast ヒット状況が確認できる（緑 Ray）
+- [ ] バイクが InvisibleRoad 上で安定して走行
+- [ ] Cesium 3D Tiles を通り抜ける（衝突しない）
+- [ ] カメラが滑らかに追従
+- [ ] エリア制限（300m 境界）が機能
+- [ ] 曲線道路でのサスペンション応答テスト完了
+
+**Phase 3 完了後は Phase 4「Grabシステムのロジック実装」に進みます。**
 
 ---
 
