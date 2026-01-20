@@ -113,14 +113,129 @@ GO-GO-Grab/
 
 ---
 
+## Phase 2: バイク走行の実装
+
+### Step 6: バイク用ゲームオブジェクトの作成
+
+1. **Hierarchy** で右クリック → **3D Object** → **Cube** を選択
+2. 以下の設定を行う：
+   - **名前:** `Bike`
+   - **Position:** (0, 1, 0) - CesiumGeoreference の中心上
+   - **Scale:** (1, 0.5, 2) - バイクっぽい形に調整
+
+### Step 7: Rigidbody とコライダー設定
+
+**Bike** ゲームオブジェクトに以下を設定：
+
+1. **Rigidbody** コンポーネント：
+   - Add Component → Physics → Rigidbody
+   - **Mass:** 1000
+   - **Drag:** 0.1
+   - **Angular Drag:** 2
+   - **Constraints:** Freeze Rotation Z (Z軸回転を制限)
+
+2. **Box Collider** の確認：
+   - Size: (1, 0.5, 2)
+   - Layer を `Bike` に設定（新規作成が必要）
+
+### Step 8: スクリプトの追加
+
+**Bike** ゲームオブジェクトに以下のスクリプトを Add Component で追加：
+
+1. **BikeController.cs**
+   - BoundaryManager: (Scene の BoundaryManager オブジェクトをドラッグ)
+   - Max Speed: 30
+   - Acceleration: 50
+   - Deceleration: 30
+   - Turn Speed: 180
+   - Bike Radius: 1
+
+2. **RaycastSuspension.cs**
+   - Road Layer: `Road` を選択
+   - Suspension Height: 0.5
+   - Suspension Force: 30
+   - Suspension Damping: 2
+   - Raycast Distance: 2
+   - Ray Count: 4
+
+### Step 9: 透明な Road Plane の作成
+
+**Hybrid Map Strategy** に従い、バイクが走行する透明な床を作成：
+
+1. **Hierarchy** で右クリック → **3D Object** → **Plane** を選択
+2. 設定：
+   - **名前:** `InvisibleRoad`
+   - **Position:** (0, 0, 0)
+   - **Scale:** (100, 1, 100) - 十分な広さ
+   - **Layer:** `Road` に設定（新規作成）
+
+3. **Mesh Renderer** の Material を透明にする（オプション）：
+   - または Material で Transparent モードに設定
+
+4. **Physics Settings** で Cesium との干渉を避ける：
+   - Road layer の Collider は `Road` layer に属する
+
+### Step 10: コリジョンレイヤーの設定（重要）
+
+Unity Editor で以下の手順を実行：
+
+1. **Edit** → **Project Settings** → **Physics**
+2. **Layers** セクションで新規レイヤーを作成：
+   - Layer 8: `Bike`
+   - Layer 9: `Road`
+   - Layer 10: `VisualOnly`
+
+3. **Collision Matrix** を設定：
+   - `Bike` ↔ `Road`: ✓ 有効（衝突判定あり）
+   - `Bike` ↔ `VisualOnly`: ✗ 無効（Cesium を通り抜ける）
+   - その他の組み合わせ: 無視してOK
+
+### Step 11: カメラのセットアップ
+
+1. **Main Camera** を選択（通常は自動作成されている）
+2. **Add Component** → CameraFollower.cs を追加
+3. 設定：
+   - **Bike Transform:** Scene の Bike オブジェクトをドラッグ
+   - **Camera Offset:** (0, 4, -8) - 後ろ上から見る角度
+   - **Follow Speed:** 5
+   - **Look Ahead Distance:** 5
+   - **Enable Look Ahead:** ✓ チェック
+
+### Step 12: ゲーム実行とテスト
+
+1. **Play** ボタンを押す
+2. 以下をテスト：
+   - **WASD / Arrow Keys** でバイクを操作
+   - **前進:** W or ↑
+   - **後退:** S or ↓
+   - **左旋回:** A or ←
+   - **右旋回:** D or →
+3. エリア制限テスト：
+   - バイクが300m 円形エリアを超えて出られないか確認
+   - BoundaryManager の **visualizeBoundary** を ON にすると、透明な壁が可視化される
+
+---
+
+## Phase 2 実装内容
+
+| スクリプト | 機能 |
+|-----------|------|
+| **BikeController.cs** | Arcade Style の移動・回転、入力処理、エリア制限統合 |
+| **RaycastSuspension.cs** | 透明 Road Plane との距離計測、車体の浮遊高さ調整 |
+| **CameraFollower.cs** | バイク追従カメラ、スムーズな視点管理 |
+
+---
+
 ## 次のステップ
 
-セットアップが完了したら、 **Phase 2** に進みます：
+**Phase 2** 完了後、以下に進みます：
 
-- [ ] 仮のバイク（Cube）の配置
-- [ ] `BikeController.cs` の実装
-- [ ] Raycast Suspension の実装
-- [ ] カメラ追従スクリプト
+- [ ] 仮のバイク（Cube）の配置 ✅ 完了
+- [ ] `BikeController.cs` の実装 ✅ 完了
+- [ ] Raycast Suspension の実装 ✅ 完了
+- [ ] カメラ追従スクリプト ✅ 完了
+
+**Phase 3:** 物理道路（透明床）の敷設
 
 ---
 

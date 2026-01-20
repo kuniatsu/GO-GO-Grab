@@ -108,11 +108,12 @@ AIへの指示出しはこのフェーズ順に行うこと。現在は **[Phase
 - [ ] **次ステップ:** Cesium Ion Access Token 取得 & Unity Editor での Cesium セットアップ（手動）。
 - [ ] ベンタイン市場（`10.7725, 106.6980`）の表示確認。
 
-### [Phase 2] バイク走行の実装
-- [ ] 仮のバイク（Cube）の配置。
-- [ ] `BikeController.cs` の作成（加速、減速、旋回）。
-- [ ] **重要:** Raycast Suspensionの実装（見た目のズレ吸収）。
-- [ ] カメラ追従（Cinemachine または シンプルなFollow script）。
+### [Phase 2] バイク走行の実装 ✅
+- [x] 仮のバイク（Cube）の配置（SETUP_GUIDE参照）。
+- [x] `BikeController.cs` の作成（加速、減速、旋回、入力処理）。
+- [x] **重要:** `RaycastSuspension.cs` の実装（見た目のズレ吸収）。
+- [x] `CameraFollower.cs` でカメラ追従を実装。
+- [ ] **次ステップ:** Unity Editor でシーン構築・コンポーネント接続・テスト実行。
 
 ### [Phase 3] 物理道路（透明床）の敷設
 - [ ] 道路に沿ってPlaneを配置し、Physics Layerを設定。
