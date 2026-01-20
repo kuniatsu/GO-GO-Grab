@@ -167,11 +167,75 @@
   * `void SetLookAheadEnabled(bool enabled)`: Look Ahead ON/OFF
   * `void SetCameraShakeEnabled(bool enabled)`: カメラ揺れ ON/OFF
 
+### J. ゲームマネージャー仕様 (Game Manager System)
+* **ゲームステート管理:**
+  * `Idle`: 待機中（客を探している）
+  * `Pickup`: ピックアップ中（指定座標へ向かう）
+  * `Delivery`: 配達中（配達先へ向かう）
+  * `Result`: 結果表示（スコア表示）
+* **時間制限:**
+  * `pickupTimeLimit = 60秒`: ピックアップ制限時間
+  * `deliveryTimeLimit = 120秒`: 配達制限時間
+* **客管理:**
+  * `maxPassengersPerGame = 2`: 1ゲーム中の最大客数
+  * `spawnRadius = 250m`: 客のスポーン範囲（エリア内）
+* **スコア計算:**
+  * 基本スコア = 100
+  * ボーナス = 残り時間比率 × 50 点（最大 150 点/客）
+* **公開API:**
+  * `EnterIdleState()`: Idle ステートに遷移
+  * `EnterPickupState(Passenger passenger)`: Pickup ステートに遷移
+  * `EnterDeliveryState()`: Delivery ステートに遷移
+  * `EnterResultState()`: Result ステートに遷移
+  * `GameState GetCurrentState()`: 現在のステートを取得
+  * `int GetTotalScore()`: 総スコアを取得
+  * `int GetPassengersCompleted()`: 完了配達数を取得
+
+### K. 乗客システム仕様 (Passenger System)
+* **乗客情報:**
+  * `passengerName`: 乗客名（表示用）
+  * `pickupLocation`: ピックアップ座標
+  * `deliveryLocation`: 配達先座標
+  * `pickupLocationName`: ピックアップ地点名
+  * `deliveryLocationName`: 配達先名
+* **判定半径:**
+  * `pickupRadius = 5m`: ピックアップ判定範囲
+  * `deliveryRadius = 5m`: 配達完了判定範囲
+* **状態管理:**
+  * `IsPickedUp()`: ピックアップ完了判定
+  * `IsDelivered()`: 配達完了判定
+  * `IsPickedUpState()`: 乗車状態確認
+* **Gizmos ビジュアライズ:**
+  * 黄色の球: ピックアップ位置（半径 5m）
+  * 青色の球: 配達先位置（半径 5m）
+  * 白色の線: ピックアップ位置と配達先を結ぶ
+
+### L. UI システム仕様 (UI Manager)
+* **UI パネル構成:**
+  * **通知パネル（上部中央）**: 乗客情報・ミッション通知
+    * タイトル（黄色）: 乗客名
+    * メッセージ（白色）: ピックアップ位置名 / 配達先名
+  * **タイマー（右上）**: 残り時間（MM:SS 形式）
+    * 30秒以上: 白色
+    * 30秒以下: オレンジ色
+    * 10秒以下: 赤色
+  * **スコア（左上）**: 累積スコア表示
+  * **ステート表示（左下）**: 現在のゲームステート
+  * **結果パネル（中央）**: 配達完了時の結果表示
+    * 乗客名、獲得スコア、残り時間
+    * 3秒間表示後、自動的に非表示
+* **公開メソッド:**
+  * `void ShowNotification(string title, string message)`: 通知を表示
+  * `void UpdateTimer(float timeRemaining)`: タイマーを更新
+  * `void UpdateScore(int score)`: スコアを更新
+  * `void UpdateState(string state)`: ゲームステートを更新
+  * `void ShowResult(string passengerName, int score, float timeRemaining)`: 結果を表示
+
 ---
 
 ## 4. 開発ロードマップ (Development Phase)
 
-AIへの指示出しはこのフェーズ順に行うこと。現在は **[Phase 3]** に着手準備中。
+AIへの指示出しはこのフェーズ順に行うこと。現在は **[Phase 4]** に着手準備中。
 
 ### [Phase 1] 走行可能なミニマップの構築 ✅
 - [x] Unityプロジェクトのセットアップ (URP推奨)。
@@ -196,10 +260,11 @@ AIへの指示出しはこのフェーズ順に行うこと。現在は **[Phase
 - [ ] Cesium 3D Tiles との整合性テスト（貫通・ズレなし）。
 - [ ] **テスト実行:** WASD でバイク走行、曲線道路対応確認。
 
-### [Phase 4] Grabシステムのロジック実装
-- [ ] UI作成（スマホ画面風HUD）。
-- [ ] `GameManager.cs` の作成（ステート管理）。
-- [ ] 客（Cylinderなど仮素材）の配置と検知ロジック。
+### [Phase 4] Grabシステムのロジック実装 ✅
+- [x] `GameManager.cs` の作成（ゲームステート管理：Idle, Pickup, Delivery, Result）。
+- [x] `Passenger.cs` の実装（乗客情報、ピックアップ・配達判定）。
+- [x] `UIManager.cs` の実装（スマホ風HUD、通知、スコア表示）。
+- [ ] **次ステップ:** Unity Editor でシーン構築・UI 接続・Game Flow テスト。
 
 ### [Phase 5] ポリッシュ & iOSビルド準備
 - [ ] バイク・キャラクターモデルの差し替え。
@@ -281,3 +346,28 @@ AIへの指示出しはこのフェーズ順に行うこと。現在は **[Phase
   * [ ] エリア制限が機能する（300m 外に出られない）
   * [ ] カメラが滑らかに追従
   * [ ] 曲線道路でのサスペンション応答テスト
+
+### 5.6 Phase 4 開発時の注意点
+* **GameManager.cs 実装時：**
+  * ゲームステート遷移の順序を厳密に実装（Idle → Pickup → Delivery → Result）
+  * BikeController、BoundaryManager、UIManager の自動取得を活用
+  * 時間制限値（pickupTimeLimit, deliveryTimeLimit）は README の値と統一
+  * スコア計算ロジック：基本 100 + ボーナス（残り時間比 × 50）
+* **Passenger.cs 実装時：**
+  * ピックアップ半径・配達半径は各 5m でテスト（パラメータ調整可）
+  * Gizmos ビジュアライズで座標を確認（黄=ピックアップ、青=配達先）
+  * MapConfig を使用して座標系の整合性確認
+* **UIManager.cs 実装時：**
+  * Canvas が自動取得できるか確認
+  * RuntimeGeneratedUI の Text コンポーネント設定を確認
+  * タイマーの色変化（10秒以下で赤）をテスト
+  * 結果パネルは 3 秒後に自動消滅
+* **ゲームフロー統合テスト：**
+  * [ ] Idle → Passenger 自動生成
+  * [ ] Pickup ステート開始と通知表示
+  * [ ] バイクがピックアップ位置に到達で Delivery 遷移
+  * [ ] Delivery ステート開始と通知表示
+  * [ ] バイクが配達先に到達で Result 遷移
+  * [ ] スコア計算と表示（基本 100 + 時間ボーナス）
+  * [ ] 時間切れ時の Idle への遷移
+  * [ ] 複数客の連続配達ループ
