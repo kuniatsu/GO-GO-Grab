@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "com.unity.cinemachine": "2.9.7",
+    "com.unity.inputsystem": "1.7.0",
+    "com.unity.render-pipelines.universal": "14.0.11",
+    "com.cesium.unity": "1.6.0"
+  },
+  "scopedRegistries": [
+    {
+      "name": "Cesium",
+      "url": "https://cesium.com/packages/cesium-npm/",
+      "scopes": ["com.cesium"]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+# Crazy Grab (MVP) - Project Settings
+# Unity 2022.3 LTS (Silicon Native推奨)
+
+project:
+  name: "Crazy Grab MVP"
+  version: "0.1.0"
+  unity_version: "2022.3 LTS"
+  target_platform: "macOS"
+  future_platform: "iOS"
+
+graphics:
+  render_pipeline: "Universal Render Pipeline (URP)"
+  target_frame_rate: 60
+
+cesium:
+  package: "com.cesium.unity"
+  version: "1.6.0"
+  center_latitude: 10.7725
+  center_longitude: 106.6980
+  boundary_radius_meters: 300
+
+bike:
+  layer: "Bike"
+  collider_type: "Capsule"
+
+roads:
+  physics_layer: "Road"
+  visual_layer: "VisualOnly"
