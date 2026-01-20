@@ -94,11 +94,84 @@
   2. Layers を確認：Bike, Road, VisualOnly が定義されているか。
   3. Collision Matrix を編集し、不要な組み合わせをチェック解除。
 
+### G. バイクコントローラー仕様 (Bike Controller System)
+* **入力スキーム:**
+  * **前進:** W または ↑ キー (速度 = maxSpeed に向けて加速)
+  * **後退:** S または ↓ キー (速度 = -maxSpeed × 0.5)
+  * **左旋回:** A または ← キー (現在の速度に応じて旋回)
+  * **右旋回:** D または → キー (同上)
+* **移動パラメータ（デフォルト値）:**
+  * `maxSpeed = 30 m/s`: 最大速度
+  * `acceleration = 50 m/s²`: 加速度（速度到達時間 ≈ 0.6秒）
+  * `deceleration = 30 m/s²`: 減速度
+  * `turnSpeed = 180 度/s`: 旋回速度（一周 = 2秒）
+  * `driftFriction = 0.95`: ドリフト時の摩擦係数（将来実装用）
+* **物理パラメータ:**
+  * `mass = 1000 kg`: バイク質量
+  * `Rigidbody.drag = 0.1`: 空気抵抗
+  * `Rigidbody.angularDrag = 2`: 回転抵抗
+  * `FreezeRotationZ`: Z軸回転を制限（転倒防止）
+* **公開API:**
+  * `float GetCurrentSpeed()`: 現在の移動速度を取得
+  * `Vector3 GetVelocity()`: Rigidbody の速度ベクトルを取得
+  * `bool IsMoving()`: 速度 > 0.5 m/s かを判定
+* **統合ポイント:**
+  * BoundaryManager との自動結合（`Start()` で自動取得）
+  * MapConfig の座標系を透過的に使用
+
+### H. サスペンションシステム仕様 (Raycast Suspension)
+* **物理モデル:** スプリング・ダンパー系
+  * サスペンション力 = `(distanceError × suspensionForce) - (heightVelocity × suspensionDamping)`
+  * `distanceError = suspensionHeight - raycastAverageDistance`
+* **Raycast 設定：**
+  * **rayCount = 4**: バイク下部の4点から Ray を放射
+  * **raycastRadius = 0.5m**: Ray 配置の半径（バイク幅に合わせて調整）
+  * **raycastDistance = 2m**: Ray の最大距離（床探索範囲）
+  * **路面検知:** Road レイヤーのみを検索
+* **サスペンションパラメータ（デフォルト値）:**
+  * `suspensionHeight = 0.5m`: 床からの目標高さ
+  * `suspensionForce = 30N`: スプリング定数（値が大きい = 硬い）
+  * `suspensionDamping = 2`: ダンパー係数（値が大きい = 揺れが少ない）
+* **調整ガイド:**
+  * **揺れが大きい場合:** suspensionDamping を増加（2 → 3-4）
+  * **沈み込みが大きい場合:** suspensionForce を増加（30 → 40-50）
+  * **応答が遅い場合:** suspensionHeight を減少（0.5 → 0.3-0.4）
+* **デバッグ方法:**
+  * Inspector で `raycastRadius` を変更して Ray 配置を調整
+  * Gizmos ビジュアライズで Ray ヒット状況を確認（黄色 = Ray 位置、緑 = ヒット、赤 = ミス）
+  * Spacebar キー長押しで Console にデバッグ情報出力
+
+### I. カメラシステム仕様 (Camera Follower)
+* **追従方式:**
+  * **基本:** バイクの後ろ上からの追従カメラ（LateUpdate で更新）
+  * **オフセット:** バイクの向きに基づいて回転（`TransformDirection` を使用）
+* **カメラパラメータ（デフォルト値）:**
+  * `cameraOffset = (0, 4, -8)`: バイクからの相対位置
+    * Y = 4m（高さ）→ ボンネット上方視点
+    * Z = -8m（後方） → 後ろから見る距離
+    * X = 0（中央） → 中央揃え
+  * `followSpeed = 5`: 追従速度（スムージング強度）
+    * 値が大きい = リアルタイム追従
+    * 値が小さい = 遅延した追従（カメラ酔い軽減）
+* **Look Ahead 機能:**
+  * `enableLookAhead = true`: ON で有効
+  * `lookAheadDistance = 5m`: バイクの前方を見る距離
+  * 進行方向の状況を事前に把握可能
+* **カメラ揺れ効果（オプション）:**
+  * `enableCameraShake = false`: デフォルト OFF（必要に応じて ON）
+  * `cameraShakeAmount = 0.2`: 揺れの大きさ（Perlin Noise ベース）
+  * 移動中の動感を演出
+* **公開API:**
+  * `void SetCameraOffset(Vector3 offset)`: カメラオフセットを動的に変更
+  * `void SetFollowSpeed(float speed)`: 追従速度を変更
+  * `void SetLookAheadEnabled(bool enabled)`: Look Ahead ON/OFF
+  * `void SetCameraShakeEnabled(bool enabled)`: カメラ揺れ ON/OFF
+
 ---
 
 ## 4. 開発ロードマップ (Development Phase)
 
-AIへの指示出しはこのフェーズ順に行うこと。現在は **[Phase 2]** に着手準備中。
+AIへの指示出しはこのフェーズ順に行うこと。現在は **[Phase 3]** に着手準備中。
 
 ### [Phase 1] 走行可能なミニマップの構築 ✅
 - [x] Unityプロジェクトのセットアップ (URP推奨)。
@@ -116,8 +189,12 @@ AIへの指示出しはこのフェーズ順に行うこと。現在は **[Phase
 - [ ] **次ステップ:** Unity Editor でシーン構築・コンポーネント接続・テスト実行。
 
 ### [Phase 3] 物理道路（透明床）の敷設
-- [ ] 道路に沿ってPlaneを配置し、Physics Layerを設定。
-- [ ] Cesiumの表示と、物理走行の整合性テスト。
+- [ ] ベンタイン市場周辺の実際の道路形状をマッピング。
+- [ ] 複数の Plane を配置し、InvisibleRoad システムの完成。
+- [ ] Road レイヤー設定と Collider 行列の確認。
+- [ ] Raycast Suspension デバッグ（Gizmos 可視化）。
+- [ ] Cesium 3D Tiles との整合性テスト（貫通・ズレなし）。
+- [ ] **テスト実行:** WASD でバイク走行、曲線道路対応確認。
 
 ### [Phase 4] Grabシステムのロジック実装
 - [ ] UI作成（スマホ画面風HUD）。
@@ -171,9 +248,36 @@ AIへの指示出しはこのフェーズ順に行うこと。現在は **[Phase
 * `BikeController.cs` 作成時：
   * `BoundaryManager.HandleBoundaryCollision()` を必ず統合。
   * `MapConfig.IsWithinBoundary()` で位置チェック。
+  * WASD 入力の反応性をテスト（acceleration / deceleration パラメータで調整）。
 * Raycast Suspension 実装時：
   * 透明 Road Plane との距離をRaycastで計測。
   * 車体の浮遊高さを Y 座標で調整。
+  * raycastRadius は バイク Collider サイズに合わせて調整（デフォルト 0.5m）。
 * カメラ追従：
-  * Cinemachine を使用する場合、Virtual Camera の Follow/LookAt を設定。
-  * シンプル実装の場合、`LateUpdate()` で追従。
+  * CameraFollower.cs で LateUpdate() での追従を実装。
+  * cameraOffset は ゲームプレイ性に応じてチューニング。
+  * Look Ahead により、進行方向の先読みを実現。
+
+### 5.5 Phase 3 開発時の注意点
+* **道路メッシュ敷設時：**
+  * InvisibleRoad (Plane) を Road レイヤーに割り当て。
+  * 複数の Plane を組み合わせる場合、隙間がないか確認（バイクが落ちる可能性）。
+  * 曲線道路の場合、複数の小さな Plane で段階的に表現。
+* **Raycast Suspension の動作確認：**
+  * Gizmos ビジュアライズで Ray が Road に正しく当たっているか確認。
+  * Red Ray（ミス） が多い場合：raycastDistance を増加。
+  * raycastRadius を Road Plane 幅に合わせて調整。
+* **Cesium との整合性：**
+  * Visual Layer (Cesium 3D Tiles) は VisualOnly レイヤーに配置。
+  * Bike ↔ VisualOnly 衝突が無効か確認。
+  * InvisibleRoad が Cesium Geometry と一致しているか視認テスト。
+* **パフォーマンス最適化：**
+  * Road Plane のメッシュ面数を抑える（Plane は最小限）。
+  * Raycast 数が増えた場合、rayCount を制限（4-8 推奨）。
+  * Physics.Raycast の非同期化（複数フレームに分散）は後続 Phase で検討。
+* **テスト項目（Phase 3 完了条件）：**
+  * [ ] バイクが Road Plane 上で安定して走行
+  * [ ] Cesium 3D Tiles を通り抜ける（衝突しない）
+  * [ ] エリア制限が機能する（300m 外に出られない）
+  * [ ] カメラが滑らかに追従
+  * [ ] 曲線道路でのサスペンション応答テスト
